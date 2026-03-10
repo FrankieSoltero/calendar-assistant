@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import type { User, CalendarEvent } from '@/types'
 import { useCalendar } from '@/hooks/use-calendar'
+import { useChat } from '@/hooks/use-chat'
 import { CalendarView } from '@/components/calendar/calendar-view'
 import { EventDetail } from '@/components/calendar/event-detail'
+import { ChatPanel } from '@/components/chat/chat-panel'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { LogOut } from 'lucide-react'
@@ -14,11 +16,13 @@ interface MainPageProps {
 
 /**
  * Primary app layout after authentication.
- * Currently: top bar + calendar. Chat panel added in Task 10.
+ * Desktop: calendar on the left, chat panel on the right.
+ * Mobile: calendar full width, chat accessible via floating button.
  */
 export function MainPage({ user, onLogout }: MainPageProps) {
   const { events, loading, currentDate, view, setView, navigate } =
     useCalendar()
+  const { messages, isStreaming, sendMessage, clearMessages } = useChat()
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
     null
   )
@@ -57,18 +61,29 @@ export function MainPage({ user, onLogout }: MainPageProps) {
         </div>
       </header>
 
-      {/* Calendar */}
-      <main className="flex-1 overflow-hidden px-2">
-        <CalendarView
-          events={events}
-          loading={loading}
-          currentDate={currentDate}
-          view={view}
-          onViewChange={setView}
-          onNavigate={navigate}
-          onEventClick={setSelectedEvent}
+      {/* Main content: calendar + chat */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Calendar */}
+        <main className="flex-1 overflow-hidden px-2">
+          <CalendarView
+            events={events}
+            loading={loading}
+            currentDate={currentDate}
+            view={view}
+            onViewChange={setView}
+            onNavigate={navigate}
+            onEventClick={setSelectedEvent}
+          />
+        </main>
+
+        {/* Chat panel */}
+        <ChatPanel
+          messages={messages}
+          isStreaming={isStreaming}
+          onSend={sendMessage}
+          onClear={clearMessages}
         />
-      </main>
+      </div>
 
       {/* Event detail modal */}
       <EventDetail
