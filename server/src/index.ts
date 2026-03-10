@@ -16,6 +16,7 @@ import cors from 'cors'
 import session from 'express-session'
 import authRoutes from './routes/auth.js'
 import calendarRoutes from './routes/calendar.js'
+import chatRoutes from './routes/chat.js'
 /**
  * Env Validation:
  * We implement a fail fast env validation
@@ -86,6 +87,7 @@ app.get('/health', (_req, res) => {
 
 app.use('/auth', authRoutes)
 app.use('/api/calendar', calendarRoutes)
+app.use('/api/chat', chatRoutes)
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`)
