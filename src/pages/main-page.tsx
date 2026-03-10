@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { User, CalendarEvent } from '@/types'
 import { useCalendar } from '@/hooks/use-calendar'
 import { CalendarView } from '@/components/calendar/calendar-view'
+import { EventDetail } from '@/components/calendar/event-detail'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { LogOut } from 'lucide-react'
@@ -18,7 +19,7 @@ interface MainPageProps {
 export function MainPage({ user, onLogout }: MainPageProps) {
   const { events, loading, currentDate, view, setView, navigate } =
     useCalendar()
-  const [_selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
     null
   )
 
@@ -68,6 +69,13 @@ export function MainPage({ user, onLogout }: MainPageProps) {
           onEventClick={setSelectedEvent}
         />
       </main>
+
+      {/* Event detail modal */}
+      <EventDetail
+        event={selectedEvent}
+        open={selectedEvent !== null}
+        onClose={() => setSelectedEvent(null)}
+      />
     </div>
   )
 }
