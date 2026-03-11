@@ -12,8 +12,6 @@ import { sendMessage as sendChatMessage } from '@/services/chat'
 export function useChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isStreaming, setIsStreaming] = useState(false)
-  const [displayedContent, setDisplayedContent] = useState('') // For animated text
-  
   // Refs for streaming state
   const abortRef = useRef(false)
   const fullContentRef = useRef('') // Complete text from API
@@ -64,8 +62,7 @@ export function useChat() {
         lastCharTimeRef.current = timestamp
         
         const newDisplay = fullText.slice(0, newIndex)
-        setDisplayedContent(newDisplay)
-        
+
         // Update the actual message
         setMessages(prev =>
           prev.map(msg =>
@@ -90,7 +87,6 @@ export function useChat() {
     abortRef.current = false
     fullContentRef.current = ''
     displayIndexRef.current = 0
-    setDisplayedContent('')
     assistantIdRef.current = null
 
     // Stop any existing animation
@@ -159,7 +155,6 @@ export function useChat() {
           
           // Ensure final content is set
           const finalContent = fullContentRef.current
-          setDisplayedContent(finalContent)
           setMessages(prev =>
             prev.map(msg =>
               msg.id === assistantIdRef.current
@@ -190,7 +185,6 @@ export function useChat() {
     
     fullContentRef.current = ''
     displayIndexRef.current = 0
-    setDisplayedContent('')
     assistantIdRef.current = null
     setMessages([])
     setIsStreaming(false)

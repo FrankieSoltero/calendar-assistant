@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import requireAuth from '../middleware/require-auth.js'
-import { getCalendarEvents } from '../services/google-calendar.js'
+import { getCalendarEvents, getCalendarTimeZone } from '../services/google-calendar.js'
 import { streamChat, ChatMessage } from '../services/ai-agent.js'
 
 const router = Router()
@@ -27,11 +27,10 @@ router.post('/', requireAuth, async (req, res) => {
     const twoWeeksOut = new Date(now)
     twoWeeksOut.setDate(twoWeeksOut.getDate() + 14)
 
-    const events = await getCalendarEvents(
-      req.accessToken!,
-      now.toISOString(),
-      twoWeeksOut.toISOString()
-    )
+    const [events, timeZone] = await Promise.all([
+      getCalendarEvents(req.accessToken!, now.toISOString(), twoWeeksOut.toISOString()),
+      getCalendarTimeZone(req.accessToken!),
+    ])
 
     // Set SSE headers for streaming
     res.setHeader('Content-Type', 'text/event-stream')
@@ -40,7 +39,7 @@ router.post('/', requireAuth, async (req, res) => {
     res.setHeader('X-Accel-Buffering', 'no') // Disable nginx/proxy buffering
     res.flushHeaders() // Send headers immediately, start chunked transfer
 
-    const stream = await streamChat(messages, events)
+    const stream = await streamChat(messages, events, timeZone)
 
     stream.on('text', (text) => {
       res.write(`data: ${JSON.stringify({ type: 'text', content: text })}\n\n`)

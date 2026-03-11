@@ -33,6 +33,19 @@ function createCalendarClient(accessToken: string) {
 }
 
 /**
+ * Returns the IANA time zone configured on the user's primary calendar
+ * (e.g. "America/Los_Angeles"). Used to anchor all date logic to the
+ * user's local time rather than the server's time zone.
+ */
+export async function getCalendarTimeZone(
+  accessToken: string
+): Promise<string> {
+  const calendar = createCalendarClient(accessToken)
+  const response = await calendar.calendars.get({ calendarId: 'primary' })
+  return response.data.timeZone ?? 'UTC'
+}
+
+/**
  * Fetches events from the user's primary Google Calendar.
  * Normalizes the response into our CalendarEvent shape.
  * Single events only (recurring events are expanded).

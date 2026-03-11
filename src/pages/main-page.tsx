@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { User, CalendarEvent } from '@/types'
 import { useCalendar } from '@/hooks/use-calendar'
 import { useChat } from '@/hooks/use-chat'
@@ -8,7 +8,7 @@ import { ChatPanel } from '@/components/chat/chat-panel'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { LogOut, MessageSquare, PanelRightClose, PanelRightOpen } from 'lucide-react'
+import { LogOut, MessageSquare, Moon, PanelRightClose, PanelRightOpen, Sun } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface MainPageProps {
@@ -29,6 +29,15 @@ export function MainPage({ user, onLogout }: MainPageProps) {
     null
   )
   const [chatOpen, setChatOpen] = useState(true)
+  const [dark, setDark] = useState(() =>
+    document.documentElement.classList.contains('dark') ||
+    (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  )
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', dark)
+    localStorage.setItem('theme', dark ? 'dark' : 'light')
+  }, [dark])
 
   const initials = user.name
     .split(' ')
@@ -60,6 +69,16 @@ export function MainPage({ user, onLogout }: MainPageProps) {
             ) : (
               <PanelRightOpen className="h-3.5 w-3.5 ml-1" />
             )}
+          </Button>
+
+          {/* Dark mode toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 cursor-pointer"
+            onClick={() => setDark(!dark)}
+          >
+            {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
 
           <Separator orientation="vertical" className="h-6 mx-1 hidden lg:block" />

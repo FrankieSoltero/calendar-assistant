@@ -136,3 +136,46 @@ Issues encountered during development and how they were resolved. Organized by c
 **Root Cause:** The GLSL shader for `turbulentDistortion` centers the road geometry by subtracting distortion at a fixed reference point `0.0125`: `getDistortionX(progress) - getDistortionX(0.0125)`. But the JS `getJS` function (which controls the camera lookAt) used a sliding offset: `getX(progress) - getX(progress + 0.007)`. Every other distortion preset (`mountainDistortion`, `LongRaceDistortion`) uses a fixed reference matching the GLSL. `turbulentDistortion` was the odd one out — a bug in the original React Bits component.
 **Fix:** Changed the JS to match the GLSL: `getX(progress) - getX(0.0125)`.
 **Lesson:** When a 3D effect has both a GPU shader and a CPU-side function that should produce consistent results, verify they use the same mathematical formulation. Mismatches between GLSL and JS are hard to spot visually because both produce plausible-looking output.
+
+---
+
+## Build / Lint Fixes
+
+### 17. Unused Variables Breaking Frontend Build
+
+**Context:** Final build check before submission.
+**Errors:** `noUnusedLocals` flagged `isNewMessage` in `message-list.tsx` and `displayedContent` / `setDisplayedContent` in `use-chat.ts`.
+**Root Cause:** `isNewMessage` was computed but never read — the auto-scroll logic only checked `autoScroll`. `displayedContent` state was a leftover from an earlier approach — the typewriter animation updates messages directly via `setMessages`, making the separate state unnecessary.
+**Fix:** Removed both unused variables and all references to `setDisplayedContent`.
+
+### 18. Server Build Failing on Test Files
+
+**Context:** `cd server && npm run build` failed with strict-null errors in `require-auth.test.ts`.
+**Root Cause:** `server/tsconfig.json` included all files in `src/` without excluding test files. Test files had `TS18048` (`possibly undefined`) errors that were acceptable in test context but failed strict compilation.
+**Fix:** Added `"exclude": ["src/**/*.test.ts"]` to `server/tsconfig.json`.
+
+---
+
+## Security / Production Hardening
+
+### 19. AI Agent Not Restricted to Calendar Topics
+
+**Context:** System prompt told Claude it was a "calendar assistant" but never explicitly restricted it from answering unrelated questions.
+**Fix:** Added a critical rule: "Only respond to questions related to the user's calendar, scheduling, time management, and email drafting for meetings. Politely decline any unrelated topics."
+**Lesson:** LLM system prompts need explicit boundaries — describing capabilities is not the same as restricting scope.
+
+### 20. Time Zone Mismatch Between Server and User
+
+**Context:** `buildSystemPrompt` used `new Date()` with the server's local time zone for "today" and the 14-day reference table. In production, a server in UTC would compute different dates than a user in California.
+**Fix:** Added `getCalendarTimeZone()` to fetch the user's IANA time zone from Google Calendar's `calendars.get('primary')` endpoint. Passed it through the chat route to `buildSystemPrompt`, which now uses `{ timeZone }` in all `toLocaleDateString` calls. The system prompt also explicitly states the user's time zone.
+**Lesson:** Never assume server time zone matches user time zone. Anchor all user-facing date logic to the user's configured time zone.
+
+### 21. No Rate Limiting
+
+**Context:** No rate limiting existed on any route, leaving the API vulnerable to abuse and uncapped Anthropic API costs.
+**Fix:** Added `express-rate-limit` with three tiers: global (100 req/15min), auth (20 req/15min), chat (20 req/1min). Rate limit responses use the same `{ error: string }` format as all other errors.
+
+### 22. No Centralized Error Handler
+
+**Context:** Each route handled errors individually with try/catch. An unhandled error would crash the server or return Express's default HTML error page.
+**Fix:** Added a centralized Express error handler at the end of the middleware chain. Catches unhandled errors, logs them, and returns `{ error: string }` — matching the existing response format. In production, error messages are replaced with a generic "Internal server error" to prevent leaking stack traces.

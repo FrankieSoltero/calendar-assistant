@@ -36,7 +36,7 @@ describe('buildSystemPrompt', () => {
   })
 
   it('includes today\'s date in the prompt', () => {
-    const prompt = buildSystemPrompt(mockEvents)
+    const prompt = buildSystemPrompt(mockEvents, 'America/Los_Angeles')
     
     expect(prompt).toContain('Today is')
     expect(prompt).toContain('Wednesday')
@@ -45,7 +45,7 @@ describe('buildSystemPrompt', () => {
   })
 
   it('includes date reference for next 14 days', () => {
-    const prompt = buildSystemPrompt(mockEvents)
+    const prompt = buildSystemPrompt(mockEvents, 'America/Los_Angeles')
     
     expect(prompt).toContain('<date_reference>')
     expect(prompt).toContain('</date_reference>')
@@ -54,7 +54,7 @@ describe('buildSystemPrompt', () => {
   })
 
   it('includes calendar events in JSON format', () => {
-    const prompt = buildSystemPrompt(mockEvents)
+    const prompt = buildSystemPrompt(mockEvents, 'America/Los_Angeles')
     
     expect(prompt).toContain('<calendar_events>')
     expect(prompt).toContain('</calendar_events>')
@@ -64,27 +64,27 @@ describe('buildSystemPrompt', () => {
   })
 
   it('enriches events with dayOfWeek field', () => {
-    const prompt = buildSystemPrompt(mockEvents)
+    const prompt = buildSystemPrompt(mockEvents, 'America/Los_Angeles')
     
     expect(prompt).toContain('"dayOfWeek":')
   })
 
   it('includes critical rules about day-of-week', () => {
-    const prompt = buildSystemPrompt(mockEvents)
+    const prompt = buildSystemPrompt(mockEvents, 'America/Los_Angeles')
     
     expect(prompt).toContain('Critical rules')
     expect(prompt).toContain('NEVER compute day-of-week from a date')
   })
 
   it('includes email formatting instructions', () => {
-    const prompt = buildSystemPrompt(mockEvents)
+    const prompt = buildSystemPrompt(mockEvents, 'America/Los_Angeles')
     
     expect(prompt).toContain('```email')
     expect(prompt).toContain('Subject:')
   })
 
   it('handles empty events array', () => {
-    const prompt = buildSystemPrompt([])
+    const prompt = buildSystemPrompt([], 'America/Los_Angeles')
     
     expect(prompt).toContain('<calendar_events>')
     expect(prompt).toContain('[]')
@@ -92,7 +92,7 @@ describe('buildSystemPrompt', () => {
   })
 
   it('includes capabilities section', () => {
-    const prompt = buildSystemPrompt(mockEvents)
+    const prompt = buildSystemPrompt(mockEvents, 'America/Los_Angeles')
     
     expect(prompt).toContain('Your capabilities')
     expect(prompt).toContain('Schedule analysis')
@@ -101,7 +101,7 @@ describe('buildSystemPrompt', () => {
   })
 
   it('includes formatting rules', () => {
-    const prompt = buildSystemPrompt(mockEvents)
+    const prompt = buildSystemPrompt(mockEvents, 'America/Los_Angeles')
     
     expect(prompt).toContain('Formatting rules')
     expect(prompt).toContain('markdown')
@@ -117,17 +117,23 @@ describe('buildSystemPrompt', () => {
       },
     ]
     
-    const prompt = buildSystemPrompt(minimalEvents)
+    const prompt = buildSystemPrompt(minimalEvents, 'America/Los_Angeles')
     
     expect(prompt).toContain('Simple Event')
     expect(prompt).toContain('"dayOfWeek":')
   })
 
   it('generates correct date reference format', () => {
-    const prompt = buildSystemPrompt(mockEvents)
-    
+    const prompt = buildSystemPrompt(mockEvents, 'America/Los_Angeles')
+
     // Should have 14 days in date reference
     const dateRefMatch = prompt.match(/\w{3},? \w{3} \d{1,2}/g)
     expect(dateRefMatch?.length).toBeGreaterThanOrEqual(14)
+  })
+
+  it('includes the user time zone in the prompt', () => {
+    const prompt = buildSystemPrompt(mockEvents, 'America/Los_Angeles')
+
+    expect(prompt).toContain('America/Los_Angeles')
   })
 })

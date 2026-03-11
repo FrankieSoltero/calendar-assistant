@@ -21,7 +21,6 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
 
   // Handle scroll on new messages
   useEffect(() => {
-    const isNewMessage = messages.length > lastMessageCountRef.current
     lastMessageCountRef.current = messages.length
 
     if (autoScroll && bottomRef.current) {
