@@ -1,9 +1,19 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { CalendarEvent } from './google-calendar.js'
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-})
+/**
+ * Lazily initialized Anthropic client.
+ * The client is created on first use rather than at module load time
+ * so that dotenv has finished injecting env vars from the root .env.
+ */
+let client: Anthropic | null = null
+function getClient(): Anthropic {
+  if (!client) {
+    const key = process.env.ANTHROPIC_API_KEY?.trim()
+    client = new Anthropic({ apiKey: key })
+  }
+  return client
+}
 
 export interface ChatMessage {
   role: 'user' | 'assistant'
@@ -20,22 +30,54 @@ export interface ChatMessage {
  * "email" for copyable email drafts.
  */
 export function buildSystemPrompt(events: CalendarEvent[]): string {
-  const today = new Date().toLocaleDateString('en-US', {
+  const now = new Date()
+  const today = now.toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   })
 
-  const eventsJson = JSON.stringify(events, null, 2)
+  // Build a date-to-day-of-week reference for the next 14 days so the
+  // model never has to compute day-of-week from a date (LLMs get this wrong).
+  const dateReference: string[] = []
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(now)
+    d.setDate(d.getDate() + i)
+    const label = d.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'short',
+      day: 'numeric',
+    })
+    dateReference.push(`  ${label}`)
+  }
+
+  // Enrich events with explicit dayOfWeek so the model doesn't guess
+  const enrichedEvents = events.map((e) => {
+    const startDate = new Date(e.start)
+    const dayOfWeek = startDate.toLocaleDateString('en-US', { weekday: 'long' })
+    return { ...e, dayOfWeek }
+  })
+
+  const eventsJson = JSON.stringify(enrichedEvents, null, 2)
 
   return `You are a helpful calendar assistant. Today is ${today}.
+
+<date_reference>
+The following is the authoritative date-to-day mapping for the next 14 days.
+ALWAYS use this reference when mentioning days — never compute day-of-week yourself.
+${dateReference.join('\n')}
+</date_reference>
 
 You have access to the user's Google Calendar events below. Use this data to answer questions about their schedule, analyze their time usage, suggest scheduling changes, and draft emails.
 
 <calendar_events>
 ${eventsJson}
 </calendar_events>
+
+## Critical rules:
+- NEVER compute day-of-week from a date. ALWAYS use the <date_reference> table above and the dayOfWeek field on each event.
+- If a user asks about "Friday" or "next Tuesday", cross-reference with the date_reference to find the correct date.
 
 ## Your capabilities:
 - **Schedule analysis**: Break down how the user spends their time (meetings vs focus time, by category, by day).
@@ -65,7 +107,7 @@ export async function streamChat(
 ) {
   const systemPrompt = buildSystemPrompt(events)
 
-  const stream = client.messages.stream({
+  const stream = getClient().messages.stream({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 4096,
     system: systemPrompt,

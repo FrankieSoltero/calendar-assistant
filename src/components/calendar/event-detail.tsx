@@ -31,7 +31,7 @@ export function EventDetail({ event, open, onClose }: EventDetailProps) {
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-xl leading-tight pr-6">
             {event.title}
@@ -51,7 +51,7 @@ export function EventDetail({ event, open, onClose }: EventDetailProps) {
           {event.location && (
             <div className="flex items-start gap-3">
               <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
-              <span className="text-sm">{event.location}</span>
+              <span className="text-sm min-w-0 break-all">{event.location}</span>
             </div>
           )}
 
@@ -59,7 +59,7 @@ export function EventDetail({ event, open, onClose }: EventDetailProps) {
           {event.description && (
             <div className="flex items-start gap-3">
               <AlignLeft className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words min-w-0">
                 {event.description}
               </p>
             </div>

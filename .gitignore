@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Coverage reports
+coverage
+*.lcov
+
 # Environment variables
 .env
 .env.local

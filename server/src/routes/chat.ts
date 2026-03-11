@@ -37,11 +37,14 @@ router.post('/', requireAuth, async (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream')
     res.setHeader('Cache-Control', 'no-cache')
     res.setHeader('Connection', 'keep-alive')
+    res.setHeader('X-Accel-Buffering', 'no') // Disable nginx/proxy buffering
+    res.flushHeaders() // Send headers immediately, start chunked transfer
 
     const stream = await streamChat(messages, events)
 
     stream.on('text', (text) => {
       res.write(`data: ${JSON.stringify({ type: 'text', content: text })}\n\n`)
+      if (typeof (res as any).flush === 'function') (res as any).flush()
     })
 
     stream.on('end', () => {

@@ -3,6 +3,12 @@ import { google } from 'googleapis'
 
 const router = Router()
 
+/**
+ * Helper function to create fresh OAuth2 clients per request
+ * If we reused a singleton then the clients holds per user credentials
+ * Sharing one across requests would then leak tokens between users
+ * @returns 
+ */
 function getOAuth2Client() {
   return new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,

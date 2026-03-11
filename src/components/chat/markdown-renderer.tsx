@@ -2,6 +2,7 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { EmailCard } from '@/components/chat/email-card'
 import type { Components } from 'react-markdown'
+import { useMemo } from 'react'
 
 interface MarkdownRendererProps {
   content: string
@@ -14,8 +15,8 @@ interface MarkdownRendererProps {
  * them as copyable EmailCard components.
  */
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
-  const components: Components = {
-    // Intercept code blocks — render email cards for "email" language
+  // Memoize components to prevent re-creation on every render
+  const components: Components = useMemo(() => ({
     code({ className, children }) {
       const language = className?.replace('language-', '')
       const text = String(children).replace(/\n$/, '')
@@ -24,14 +25,12 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         return <EmailCard content={text} />
       }
 
-      // Regular code blocks
       return (
         <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">
           {children}
         </code>
       )
     },
-    // Style pre blocks
     pre({ children }) {
       return (
         <div className="my-2 rounded-md bg-muted p-3 overflow-x-auto">
@@ -39,7 +38,6 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         </div>
       )
     },
-    // Style tables for schedule breakdowns
     table({ children }) {
       return (
         <div className="my-2 overflow-x-auto rounded-md border border-border">
@@ -62,18 +60,15 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         <td className="px-3 py-1.5 border-b border-border/50">{children}</td>
       )
     },
-    // Style lists
     ul({ children }) {
       return <ul className="list-disc pl-5 space-y-1 my-1">{children}</ul>
     },
     ol({ children }) {
       return <ol className="list-decimal pl-5 space-y-1 my-1">{children}</ol>
     },
-    // Style paragraphs
     p({ children }) {
       return <p className="my-1.5 leading-relaxed">{children}</p>
     },
-    // Style headings
     h1({ children }) {
       return <h1 className="text-lg font-bold mt-3 mb-1">{children}</h1>
     },
@@ -83,11 +78,10 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     h3({ children }) {
       return <h3 className="text-sm font-bold mt-2 mb-1">{children}</h3>
     },
-    // Style bold and emphasis
     strong({ children }) {
       return <strong className="font-semibold">{children}</strong>
     },
-  }
+  }), [])
 
   return (
     <div className="text-sm">

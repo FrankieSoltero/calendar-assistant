@@ -10,7 +10,10 @@ interface MessageBubbleProps {
 /**
  * Individual chat message bubble.
  * User messages: right-aligned, primary color.
- * AI messages: left-aligned, muted background, markdown-rendered.
+ * AI messages: left-aligned, muted background.
+ * 
+ * During streaming, raw text is shown (no markdown parsing)
+ * to avoid expensive re-renders on every character.
  */
 export function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
   const isUser = message.role === 'user'
@@ -18,7 +21,7 @@ export function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
   return (
     <div
       className={cn(
-        'flex animate-in fade-in slide-in-from-bottom-2 duration-300',
+        'flex',
         isUser ? 'justify-end' : 'justify-start'
       )}
     >
@@ -33,14 +36,30 @@ export function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
         {isUser ? (
           <p className="text-sm whitespace-pre-wrap">{message.content}</p>
         ) : (
-          <>
-            <MarkdownRenderer content={message.content} />
-            {isStreaming && message.content.length > 0 && (
-              <span className="inline-block w-1.5 h-4 bg-foreground/70 animate-pulse ml-0.5 -mb-0.5" />
+          <div className="relative">
+            {/* During streaming: show raw text (no markdown for performance) */}
+            {/* After streaming: parse markdown */}
+            {isStreaming ? (
+              <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                {message.content}
+                <span 
+                  className="inline-block w-1.5 h-4 bg-current/70 ml-0.5 align-middle"
+                  style={{ animation: 'pulse-cursor 1s ease-in-out infinite' }}
+                />
+              </p>
+            ) : (
+              <MarkdownRenderer content={message.content} />
             )}
-          </>
+          </div>
         )}
       </div>
+
+      <style>{`
+        @keyframes pulse-cursor {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
+      `}</style>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Copy, Check, Mail } from 'lucide-react'
@@ -13,7 +13,7 @@ interface EmailCardProps {
  * tagged "email" — the markdown renderer detects this and
  * renders this component instead of a regular code block.
  */
-export function EmailCard({ content }: EmailCardProps) {
+function EmailCardComponent({ content }: EmailCardProps) {
   const [copied, setCopied] = useState(false)
 
   async function handleCopy() {
@@ -70,3 +70,5 @@ export function EmailCard({ content }: EmailCardProps) {
     </Card>
   )
 }
+
+export const EmailCard = memo(EmailCardComponent)

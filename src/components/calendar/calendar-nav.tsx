@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { getWeekBounds, formatWeekRange } from '@/lib/date-utils'
+import { cn } from '@/lib/utils'
 
 interface CalendarNavProps {
   currentDate: Date
@@ -13,7 +14,7 @@ interface CalendarNavProps {
  * Top navigation bar for the calendar.
  * Left: Today button + prev/next arrows.
  * Center: Current date range label.
- * Right: Week/Day view toggle.
+ * Right: Week/Day view toggle with seamless styling.
  */
 export function CalendarNav({
   currentDate,
@@ -35,6 +36,7 @@ export function CalendarNav({
 
   return (
     <div className="flex items-center justify-between py-3 px-1">
+      {/* Left: Navigation */}
       <div className="flex items-center gap-2">
         <Button
           variant="outline"
@@ -64,14 +66,19 @@ export function CalendarNav({
         </div>
       </div>
 
+      {/* Center: Date label */}
       <h2 className="text-lg font-semibold">{dateLabel}</h2>
 
-      <div className="flex items-center rounded-lg border border-border">
+      {/* Right: View toggle - seamless button group */}
+      <div className="inline-flex rounded-lg border border-border p-0.5 bg-muted/30">
         <Button
           variant={view === 'week' ? 'secondary' : 'ghost'}
           size="sm"
           onClick={() => onViewChange('week')}
-          className="rounded-r-none cursor-pointer"
+          className={cn(
+            "cursor-pointer rounded-sm border-0 shadow-none",
+            view === 'week' && "bg-background shadow-sm"
+          )}
         >
           Week
         </Button>
@@ -79,7 +86,10 @@ export function CalendarNav({
           variant={view === 'day' ? 'secondary' : 'ghost'}
           size="sm"
           onClick={() => onViewChange('day')}
-          className="rounded-l-none cursor-pointer"
+          className={cn(
+            "cursor-pointer rounded-sm border-0 shadow-none",
+            view === 'day' && "bg-background shadow-sm"
+          )}
         >
           Day
         </Button>

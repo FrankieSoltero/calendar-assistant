@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ChatMessage } from '@/types'
 import { MessageBubble } from '@/components/chat/message-bubble'
 import { CalendarDays } from 'lucide-react'
@@ -10,15 +10,43 @@ interface MessageListProps {
 
 /**
  * Scrollable container for chat messages.
- * Auto-scrolls to the bottom when new messages arrive
- * or when the streaming message updates.
+ * Auto-scrolls to the bottom when new messages arrive.
+ * During streaming, scrolls smoothly without causing layout shifts.
  */
 export function MessageList({ messages, isStreaming }: MessageListProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const lastMessageCountRef = useRef(messages.length)
+  const [autoScroll, setAutoScroll] = useState(true)
 
+  // Handle scroll on new messages
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    const isNewMessage = messages.length > lastMessageCountRef.current
+    lastMessageCountRef.current = messages.length
+
+    if (autoScroll && bottomRef.current) {
+      // Use instant scroll for streaming to avoid jitter
+      bottomRef.current.scrollIntoView({ 
+        behavior: isStreaming ? 'auto' : 'smooth',
+        block: 'end'
+      })
+    }
+  }, [messages, isStreaming, autoScroll])
+
+  // Monitor scroll to detect if user scrolls up (disable auto-scroll)
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50
+      setAutoScroll(isAtBottom)
+    }
+
+    container.addEventListener('scroll', handleScroll)
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [])
 
   if (messages.length === 0) {
     return (
@@ -40,7 +68,10 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-3">
+    <div 
+      ref={containerRef}
+      className="flex-1 overflow-y-auto p-4 space-y-3 scroll-smooth"
+    >
       {messages.map((message, index) => (
         <MessageBubble
           key={message.id}

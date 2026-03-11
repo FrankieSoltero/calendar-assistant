@@ -14,9 +14,8 @@ interface StreamEvent {
  * Sends the conversation history to the backend and returns
  * an async generator that yields text chunks as they stream in.
  *
- * Uses the native fetch + ReadableStream API to consume SSE
- * rather than EventSource, because EventSource only supports GET
- * and we need POST with a JSON body.
+ * Uses the native fetch + ReadableStream API to consume SSE.
+ * Batches tokens for smoother UI updates.
  */
 export async function* sendMessage(
   messages: ChatMessage[]
@@ -59,6 +58,8 @@ export async function* sendMessage(
       try {
         const event: StreamEvent = JSON.parse(json)
         yield event
+        // Small delay to allow UI breathing room, but not force re-render
+        await new Promise((r) => requestAnimationFrame(r))
       } catch {
         // Skip malformed events
       }

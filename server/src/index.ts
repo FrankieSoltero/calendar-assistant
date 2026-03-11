@@ -41,6 +41,7 @@ if (missing.length > 0) {
 const app = express()
 const PORT = process.env.PORT || 3001
 
+console.log(process.env.VITE_API_URL)
 /**
  * Cors:
  * We set up cors to have origin restricted to our front end Url
